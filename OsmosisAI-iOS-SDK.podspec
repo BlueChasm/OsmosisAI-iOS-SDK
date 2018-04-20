@@ -5,7 +5,7 @@ Pod::Spec.new do |s|
   s.summary      = "iOS SDK for the OsmosisAI Platform"
 
   s.description  = <<-DESC
-  We need to add a description here
+  We need to add a description here that is longer than the summary.
                    DESC
 
   s.homepage      = "https://osmosisai.com"
@@ -16,7 +16,8 @@ Pod::Spec.new do |s|
   s.platform      = :ios, "11.0"
   s.source        = { :git => "https://github.com/BlueChasm/OsmosisAI-iOS-SDK.git", :tag => "#{s.version}" }
   s.source_files  = 'OsmosisAI/**/*'
-
+  s.swift_version = '4.0'
+  
   # ――― Resources ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
   #
   #  A list of resources included with the Pod. These are copied into the
@@ -26,7 +27,7 @@ Pod::Spec.new do |s|
   #
 
   # s.resource  = "icon.png"
-  # s.resources = "Resources/*.png"
+  s.resources = "OsmosisAI/Resources/*.*"
 
   # s.preserve_paths = "FilesToSave", "MoreFilesToSave"
 

@@ -12,7 +12,7 @@ import Vision
 import AVFoundation
 import Accelerate
 
-class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
+open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
   
   @IBOutlet weak var cameraView: UIView!
   //@IBOutlet weak var frameLabel: UILabel!
@@ -42,7 +42,7 @@ class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSampleB
   var boundingBoxes: [BoundingBox] = []
   let multiClass = true
   
-  override func viewDidLoad() {
+  override open func viewDidLoad() {
     super.viewDidLoad()
     self.cameraView?.layer.addSublayer(self.cameraLayer)
     //self.cameraView?.bringSubview(toFront: self.frameLabel)
@@ -60,7 +60,7 @@ class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSampleB
     
   }
   
-  override func viewDidAppear(_ animated: Bool) {
+  override open func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     cameraLayer.frame = cameraView.layer.bounds
   }
@@ -74,14 +74,9 @@ class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSampleB
     }
   }
   
-  override func viewDidLayoutSubviews() {
+  override open func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
     self.cameraLayer.frame = self.cameraView?.bounds ?? .zero
-  }
-  
-  override func didReceiveMemoryWarning() {
-    super.didReceiveMemoryWarning()
-    // Dispose of any resources that can be recreated.
   }
   
   func setupVision() {
@@ -105,10 +100,9 @@ class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSampleB
       let classPredictions = results[0].featureValue.multiArrayValue else {
         return nil
     }
-    
-    //DispatchQueue.main.async {
-    //  self.frameLabel.text = "FPS: \(framesPerSecond.format(f: ".3"))"
-    //}
+    //    DispatchQueue.main.async {
+    //      self.frameLabel.text = "FPS: \(framesPerSecond.format(f: ".3"))"
+    //    }
     
     let predictions = self.ssdPostProcessor.postprocess(boxPredictions: boxPredictions, classPredictions: classPredictions)
     return predictions
@@ -116,11 +110,8 @@ class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSampleB
   
   func drawBoxes(predictions: [Prediction]) {
     
-    print("Here")
     for (index, prediction) in predictions.enumerated() {
       if let classNames = self.ssdPostProcessor.classNames {
-        print("Class: \(classNames[prediction.detectedClass])")
-        
         let textColor: UIColor
         let textLabel = String(format: "%.2f - %@", self.sigmoid(prediction.score), classNames[prediction.detectedClass])
         
@@ -136,7 +127,7 @@ class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSampleB
     }
   }
   
-  func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+  public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
     guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
       return
     }
@@ -248,4 +239,5 @@ class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSampleB
       return .rightTop
     }
   }
+  
 }
