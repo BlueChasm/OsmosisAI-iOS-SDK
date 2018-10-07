@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14113" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="7SZ-t7-iiN">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--OsmosisAI View Controller-->
+        <scene sceneID="LJZ-wp-fvO">
+            <objects>
+                <viewController id="7SZ-t7-iiN" customClass="OsmosisAIViewController" customModule="OsmosisAI_iOS_SDK" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="tCP-ri-ayu">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Jwd-mt-Rhd">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                                <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                            </view>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstAttribute="bottom" secondItem="Jwd-mt-Rhd" secondAttribute="bottom" id="F8r-wE-X14"/>
+                            <constraint firstAttribute="trailing" secondItem="Jwd-mt-Rhd" secondAttribute="trailing" id="bBJ-z5-2zs"/>
+                            <constraint firstItem="Jwd-mt-Rhd" firstAttribute="top" secondItem="tCP-ri-ayu" secondAttribute="top" id="eio-KZ-jVq"/>
+                            <constraint firstItem="Jwd-mt-Rhd" firstAttribute="leading" secondItem="tCP-ri-ayu" secondAttribute="leading" id="qrd-Sh-e5B"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="GdF-lk-F4X"/>
+                    </view>
+                    <connections>
+                        <outlet property="cameraView" destination="Jwd-mt-Rhd" id="DWS-U3-82k"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="LU8-Fw-OdP" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-135" y="176"/>
+        </scene>
+    </scenes>
+</document>

@@ -1,29 +1,33 @@
-//
-//  OsmosisAIViewController.swift
-//  OsmosisAI
-//
-//  Created by Ryan VanAlstine on 4/19/18.
-//  Copyright © 2018 OsmosisAI. All rights reserved.
-//
+//  Copyright © 2018 OsmosisAI, Inc. All rights reserved.
 
-import UIKit
-import CoreML
-import Vision
-import AVFoundation
+/*
+ CONFIDENTIALITY NOTICE:
+ This Software and all associated source files are confidential
+ and intended only for use by individual or entity to which addressed
+ and may contain information that is privileged, confidential and exempt from disclosure under applicable law.
+ If you are not the intended recipient, be aware that any use, dissemination or disclosure,
+ distribution or copying of communication or attachments is strictly prohibited.
+ */
+
 import Accelerate
+import AVFoundation
+import CoreML
+import UIKit
+import Vision
+
 
 open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
   
+  // MARK: - Properties
+  
   @IBOutlet weak var cameraView: UIView!
-  //@IBOutlet weak var frameLabel: UILabel!
   
   let semaphore = DispatchSemaphore(value: 1)
   var lastExecution = Date()
   var screenHeight: Double?
   var screenWidth: Double?
-  let ssdPostProcessor = SSDPostProcessor(numAnchors: 1917, numClasses: 90)
+  var ssdPostProcessor = SSDPostProcessor(numAnchors: 1917, numClasses: 90)
   var visionModel:VNCoreMLModel?
-  
   
   private lazy var cameraLayer: AVCaptureVideoPreviewLayer = AVCaptureVideoPreviewLayer(session: self.captureSession)
   private lazy var captureSession: AVCaptureSession = {
@@ -42,21 +46,33 @@ open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSa
   var boundingBoxes: [BoundingBox] = []
   let multiClass = true
   
+  
+  // MARK: - Object Lifecycle
+  
   override open func viewDidLoad() {
     super.viewDidLoad()
     self.cameraView?.layer.addSublayer(self.cameraLayer)
-    //self.cameraView?.bringSubview(toFront: self.frameLabel)
-    //self.frameLabel.textAlignment = .left
     let videoOutput = AVCaptureVideoDataOutput()
     videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "MyQueue"))
     self.captureSession.addOutput(videoOutput)
-    self.captureSession.startRunning()
-    setupVision()
-    
-    setupBoxes()
-    
+
     screenWidth = Double(view.frame.width)
     screenHeight = Double(view.frame.height)
+    
+    setupBoxes()
+  }
+  
+  open override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+  
+    
+    if let c = SessionData.shared.currentClassifier {
+      setupDownloadedModel(classifier: c)
+    } else {
+      setupInception()
+    }
+
+    self.captureSession.startRunning()
     
   }
   
@@ -65,13 +81,10 @@ open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSa
     cameraLayer.frame = cameraView.layer.bounds
   }
   
-  func setupBoxes() {
-    // Create shape layers for the bounding boxes.
-    for _ in 0..<numBoxes {
-      let box = BoundingBox()
-      box.addToLayer(view.layer)
-      self.boundingBoxes.append(box)
-    }
+  open override func viewWillDisappear(_ animated: Bool) {
+    super.viewWillDisappear(animated)
+    
+    self.captureSession.stopRunning()
   }
   
   override open func viewDidLayoutSubviews() {
@@ -79,52 +92,22 @@ open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSa
     self.cameraLayer.frame = self.cameraView?.bounds ?? .zero
   }
   
-  func setupVision() {
-    guard let visionModel = try? VNCoreMLModel(for: ssd_mobilenet_feature_extractor().model)
-      else { fatalError("Can't load VisionML model") }
-    self.visionModel = visionModel
-  }
   
-  func processClassifications(for request: VNRequest, error: Error?) -> [Prediction]? {
-    let thisExecution = Date()
-    //let executionTime = thisExecution.timeIntervalSince(lastExecution)
-    //let framesPerSecond:Double = 1/executionTime
-    lastExecution = thisExecution
-    guard let results = request.results as? [VNCoreMLFeatureValueObservation] else {
-      return nil
-    }
-    guard results.count == 2 else {
-      return nil
-    }
-    guard let boxPredictions = results[1].featureValue.multiArrayValue,
-      let classPredictions = results[0].featureValue.multiArrayValue else {
-        return nil
-    }
-    //    DispatchQueue.main.async {
-    //      self.frameLabel.text = "FPS: \(framesPerSecond.format(f: ".3"))"
-    //    }
-    
-    let predictions = self.ssdPostProcessor.postprocess(boxPredictions: boxPredictions, classPredictions: classPredictions)
-    return predictions
-  }
+  // MARK: - Public Methods
   
-  func drawBoxes(predictions: [Prediction]) {
-    
-    for (index, prediction) in predictions.enumerated() {
-      if let classNames = self.ssdPostProcessor.classNames {
-        let textColor: UIColor
-        let textLabel = String(format: "%.2f - %@", self.sigmoid(prediction.score), classNames[prediction.detectedClass])
-        
-        textColor = UIColor.black
-        let rect = prediction.finalPrediction.toCGRect(imgWidth: self.screenWidth!, imgHeight: self.screenWidth!, xOffset: 0, yOffset: (self.screenHeight! - self.screenWidth!)/2)
-        self.boundingBoxes[index].show(frame: rect,
-                                       label: textLabel,
-                                       color: UIColor.red, textColor: textColor)
+  public class func setup(storyboard: UIStoryboard? = nil) -> OsmosisAIViewController {    
+    if let s = storyboard {
+      guard let vc = s.instantiateInitialViewController() as? OsmosisAIViewController else {
+        fatalError("When using a custom storyboard, please set your OsmosisAIViewController as the initial view controller.")
       }
+      return vc
     }
-    for index in predictions.count..<self.numBoxes {
-      self.boundingBoxes[index].hide()
+    
+    let frameworkBundle = Bundle(for: OsmosisAIViewController.self)
+    guard let viewController = UIStoryboard(name: "OsmosisAIViewController", bundle: frameworkBundle).instantiateInitialViewController() as? OsmosisAIViewController else {
+      fatalError("Unable to instantiate OsmosisAIViewController")
     }
+    return viewController
   }
   
   public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
@@ -136,7 +119,7 @@ open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSa
     }
     
     var requestOptions:[VNImageOption : Any] = [:]
-    if let cameraIntrinsicData = CMGetAttachment(sampleBuffer, kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix, nil) {
+    if let cameraIntrinsicData = CMGetAttachment(sampleBuffer, key: kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix, attachmentModeOut: nil) {
       requestOptions = [.cameraIntrinsics:cameraIntrinsicData]
     }
     let orientation = CGImagePropertyOrientation(rawValue: UInt32(EXIFOrientation.rightTop.rawValue))
@@ -159,6 +142,84 @@ open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSa
       print(error)
       self.semaphore.signal()
       
+    }
+  }
+  
+  
+  // MARK: - Private Methods
+  
+  func setupBoxes() {
+    for _ in 0..<numBoxes {
+      let box = BoundingBox()
+      box.addToLayer(view.layer)
+      self.boundingBoxes.append(box)
+    }
+  }
+
+  func setupDownloadedModel(classifier: Classifier) {
+    guard let graphURL = classifier.graphFileURL else { return }
+    
+    guard let model = try? MLModel(contentsOf: graphURL) else {
+      fatalError("Can't open CoreML model")
+    }
+    
+    guard let visionModel = try? VNCoreMLModel(for: model) else {
+      fatalError("Can't load VisionML model")
+    }
+    
+    ssdPostProcessor = SSDPostProcessor(classifier: classifier)
+    self.visionModel = visionModel
+  }
+  
+  func setupInception() {
+    guard let visionModel = try? VNCoreMLModel(for: ssd_mobilenet_feature_extractor().model)
+      else { fatalError("Can't load VisionML model") }
+    self.visionModel = visionModel
+  }
+  
+  func processClassifications(for request: VNRequest, error: Error?) -> [Prediction]? {
+    let thisExecution = Date()
+    //let executionTime = thisExecution.timeIntervalSince(lastExecution)
+    //let framesPerSecond:Double = 1/executionTime
+    lastExecution = thisExecution
+    
+    guard let results = request.results as? [VNCoreMLFeatureValueObservation] else {
+      return nil
+    }
+    
+    guard results.count == 2 else {
+      return nil
+    }
+    
+    guard let boxPredictions = results[1].featureValue.multiArrayValue,
+      let classPredictions = results[0].featureValue.multiArrayValue else {
+        return nil
+    }
+    //    DispatchQueue.main.async {
+    //      self.frameLabel.text = "FPS: \(framesPerSecond.format(f: ".3"))"
+    //    }
+    
+    let predictions = self.ssdPostProcessor.postprocess(boxPredictions: boxPredictions, classPredictions: classPredictions)
+    return predictions
+  }
+  
+  func drawBoxes(predictions: [Prediction]) {
+    
+    for (index, prediction) in predictions.enumerated() {
+      if let classNames = self.ssdPostProcessor.classNames {
+        let textColor: UIColor
+        let name = classNames[prediction.detectedClass]
+        let textLabel = String(format: "%.2f - %@", self.sigmoid(prediction.score), name)
+        
+        textColor = UIColor.black
+        let rect = prediction.finalPrediction.toCGRect(imgWidth: self.screenWidth!, imgHeight: self.screenWidth!, xOffset: 0, yOffset: (self.screenHeight! - self.screenWidth!)/2)
+        self.boundingBoxes[index].show(frame: rect,
+                                       label: textLabel,
+                                       color: UIColor.red, textColor: textColor)
+      }
+    }
+    for index in predictions.count..<self.numBoxes {
+      self.boundingBoxes[index].hide()
     }
   }
   
@@ -203,24 +264,6 @@ open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSa
     
     let y:[Double] = x.compactMap{Double($0)}
     return y
-  }
-  
-  enum EXIFOrientation : Int32 {
-    case topLeft = 1
-    case topRight
-    case bottomRight
-    case bottomLeft
-    case leftTop
-    case rightTop
-    case rightBottom
-    case leftBottom
-    
-    var isReflect:Bool {
-      switch self {
-      case .topLeft,.bottomRight,.rightTop,.leftBottom: return false
-      default: return true
-      }
-    }
   }
   
   func compensatingEXIFOrientation(deviceOrientation:UIDeviceOrientation) -> EXIFOrientation

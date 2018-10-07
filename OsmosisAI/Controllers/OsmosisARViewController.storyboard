@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14113" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="Vck-xf-kXn">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--OsmosisAR View Controller-->
+        <scene sceneID="E10-O4-YRc">
+            <objects>
+                <viewController id="Vck-xf-kXn" customClass="OsmosisARViewController" customModule="OsmosisAI_iOS_SDK" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="XTC-sO-Kh9">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <arscnView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ifY-S7-hob">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                                <connections>
+                                    <outletCollection property="gestureRecognizers" destination="n9M-xM-rEY" appends="YES" id="x9X-z7-Mew"/>
+                                </connections>
+                            </arscnView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="ifY-S7-hob" firstAttribute="top" secondItem="XTC-sO-Kh9" secondAttribute="top" id="0ce-iw-08m"/>
+                            <constraint firstAttribute="bottom" secondItem="ifY-S7-hob" secondAttribute="bottom" id="Zu1-tv-kMU"/>
+                            <constraint firstItem="ifY-S7-hob" firstAttribute="leading" secondItem="XTC-sO-Kh9" secondAttribute="leading" id="elU-JT-m60"/>
+                            <constraint firstAttribute="trailing" secondItem="ifY-S7-hob" secondAttribute="trailing" id="pvZ-cA-Nhj"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="jtV-U7-faq"/>
+                    </view>
+                    <connections>
+                        <outlet property="sceneView" destination="ifY-S7-hob" id="wqv-Og-DXv"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Qwo-yg-PSn" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <tapGestureRecognizer id="n9M-xM-rEY"/>
+            </objects>
+            <point key="canvasLocation" x="255" y="-90"/>
+        </scene>
+    </scenes>
+</document>

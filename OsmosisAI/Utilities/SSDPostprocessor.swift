@@ -106,6 +106,23 @@ class SSDPostProcessor: NSObject {
     
   }
   
+  init(numAnchors: Int = 1917, classifier: Classifier, threshold: Double = 0.01) {
+    self.numAnchors = numAnchors
+    self.numClasses = classifier.labels.count
+    self.threshold = threshold
+    
+    super.init()
+    
+    //classNames = classifier.labels.map({$0.name!})
+    let mappedClassNames = classifier.labels.map({$0.name!})
+    var allClassNames = ["????"]
+    allClassNames.append(contentsOf: mappedClassNames)
+
+    classNames = allClassNames
+//
+    print(classNames ?? "Empty")
+  }
+  
   func postprocess(boxPredictions: MLMultiArray, classPredictions: MLMultiArray) -> [Prediction] {
     let prunedPredictions = pruneLowScoring(boxPredictions: boxPredictions, classPredictions: classPredictions)
     

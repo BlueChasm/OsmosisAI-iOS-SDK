@@ -92,11 +92,11 @@ extension UIImage {
   */
   public convenience init?(pixelBuffer: CVPixelBuffer) {
     var cgImage: CGImage?
-    VTCreateCGImageFromCVPixelBuffer(pixelBuffer, nil, &cgImage)
+    VTCreateCGImageFromCVPixelBuffer(pixelBuffer, options: nil, imageOut: &cgImage)
 
     if let cgImage = cgImage {
       //self.init(cgImage: cgImage)
-        self.init(cgImage: cgImage, scale: 1.0, orientation: UIImageOrientation.right)
+        self.init(cgImage: cgImage, scale: 1.0, orientation: UIImage.Orientation.right)
     } else {
       return nil
     }
@@ -125,7 +125,7 @@ extension UIImage {
                                                width: Int,
                                                height: Int,
                                                scale: CGFloat = 0,
-                                               orientation: UIImageOrientation = .up) -> UIImage? {
+                                               orientation: UIImage.Orientation = .up) -> UIImage? {
     return fromByteArray(bytes, width: width, height: height,
                          scale: scale, orientation: orientation,
                          bytesPerRow: width * 4,
@@ -140,7 +140,7 @@ extension UIImage {
                                                width: Int,
                                                height: Int,
                                                scale: CGFloat = 0,
-                                               orientation: UIImageOrientation = .up) -> UIImage? {
+                                               orientation: UIImage.Orientation = .up) -> UIImage? {
     return fromByteArray(bytes, width: width, height: height,
                          scale: scale, orientation: orientation,
                          bytesPerRow: width,
@@ -152,7 +152,7 @@ extension UIImage {
                                     width: Int,
                                     height: Int,
                                     scale: CGFloat,
-                                    orientation: UIImageOrientation,
+                                    orientation: UIImage.Orientation,
                                     bytesPerRow: Int,
                                     colorSpace: CGColorSpace,
                                     alphaInfo: CGImageAlphaInfo) -> UIImage? {
