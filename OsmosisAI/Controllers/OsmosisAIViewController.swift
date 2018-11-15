@@ -29,6 +29,11 @@ open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSa
   var ssdPostProcessor = SSDPostProcessor(numAnchors: 1917, numClasses: 90)
   var visionModel:VNCoreMLModel?
   
+  private var textDetectionRequest: VNDetectTextRectanglesRequest?
+  private var textObservations = [VNTextObservation]()
+  private var tesseract = G8Tesseract(language: "eng", engineMode: .tesseractOnly)
+  private var font = CTFontCreateWithName("Helvetica" as CFString, 18, nil)
+  
   private lazy var cameraLayer: AVCaptureVideoPreviewLayer = AVCaptureVideoPreviewLayer(session: self.captureSession)
   private lazy var captureSession: AVCaptureSession = {
     let session = AVCaptureSession()
@@ -95,7 +100,7 @@ open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSa
   
   // MARK: - Public Methods
   
-  public class func setup(storyboard: UIStoryboard? = nil) -> OsmosisAIViewController {    
+  public class func setup(ocr: Bool? = false, storyboard: UIStoryboard? = nil) -> OsmosisAIViewController {    
     if let s = storyboard {
       guard let vc = s.instantiateInitialViewController() as? OsmosisAIViewController else {
         fatalError("When using a custom storyboard, please set your OsmosisAIViewController as the initial view controller.")
@@ -122,6 +127,7 @@ open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSa
     if let cameraIntrinsicData = CMGetAttachment(sampleBuffer, key: kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix, attachmentModeOut: nil) {
       requestOptions = [.cameraIntrinsics:cameraIntrinsicData]
     }
+    
     let orientation = CGImagePropertyOrientation(rawValue: UInt32(EXIFOrientation.rightTop.rawValue))
     
     let trackingRequest = VNCoreMLRequest(model: visionModel) { (request, error) in
@@ -147,6 +153,98 @@ open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSa
   
   
   // MARK: - Private Methods
+  
+  func handleOCR(sampleBuffer: CMSampleBuffer) {
+    guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+      return
+    }
+    
+    var imageRequestOptions = [VNImageOption: Any]()
+    if let cameraData = CMGetAttachment(sampleBuffer, kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix, nil) {
+      imageRequestOptions[.cameraIntrinsics] = cameraData
+    }
+    let imageRequestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: CGImagePropertyOrientation(rawValue: 6)!, options: imageRequestOptions)
+    do {
+      try imageRequestHandler.perform([textDetectionRequest!])
+    }
+    catch {
+      print("Error occured \(error)")
+    }
+    var ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+    let transform = ciImage.orientationTransform(for: CGImagePropertyOrientation(rawValue: 6)!)
+    ciImage = ciImage.transformed(by: transform)
+    let size = ciImage.extent.size
+    var recognizedTextPositionTuples = [(rect: CGRect, text: String)]()
+    for textObservation in textObservations {
+      guard let rects = textObservation.characterBoxes else {
+        continue
+      }
+      var xMin = CGFloat.greatestFiniteMagnitude
+      var xMax: CGFloat = 0
+      var yMin = CGFloat.greatestFiniteMagnitude
+      var yMax: CGFloat = 0
+      for rect in rects {
+        
+        xMin = min(xMin, rect.bottomLeft.x)
+        xMax = max(xMax, rect.bottomRight.x)
+        yMin = min(yMin, rect.bottomRight.y)
+        yMax = max(yMax, rect.topRight.y)
+      }
+      let imageRect = CGRect(x: xMin * size.width, y: yMin * size.height, width: (xMax - xMin) * size.width, height: (yMax - yMin) * size.height)
+      let context = CIContext(options: nil)
+      guard let cgImage = context.createCGImage(ciImage, from: imageRect) else {
+        continue
+      }
+      let uiImage = UIImage(cgImage: cgImage)
+      tesseract?.image = uiImage
+      tesseract?.recognize()
+      guard var text = tesseract?.recognizedText else {
+        continue
+      }
+      text = text.trimmingCharacters(in: CharacterSet.newlines)
+      if !text.isEmpty {
+        let x = xMin
+        let y = 1 - yMax
+        let width = xMax - xMin
+        let height = yMax - yMin
+        recognizedTextPositionTuples.append((rect: CGRect(x: x, y: y, width: width, height: height), text: text))
+      }
+    }
+    textObservations.removeAll()
+    DispatchQueue.main.async {
+      let viewWidth = self.view.frame.size.width
+      let viewHeight = self.view.frame.size.height
+      guard let sublayers = self.view.layer.sublayers else {
+        return
+      }
+      for layer in sublayers[1...] {
+        
+        if let _ = layer as? CATextLayer {
+          layer.removeFromSuperlayer()
+        }
+      }
+      for tuple in recognizedTextPositionTuples {
+        let textLayer = CATextLayer()
+        textLayer.backgroundColor = UIColor.clear.cgColor
+        textLayer.font = self.font
+        var rect = tuple.rect
+        
+        rect.origin.x *= viewWidth
+        rect.size.width *= viewWidth
+        rect.origin.y *= viewHeight
+        rect.size.height *= viewHeight
+        
+        // Increase the size of text layer to show text of large lengths
+        rect.size.width += 100
+        rect.size.height += 100
+        
+        textLayer.frame = rect
+        textLayer.string = tuple.text
+        textLayer.foregroundColor = UIColor.green.cgColor
+        self.view.layer.addSublayer(textLayer)
+      }
+    }
+  }
   
   func setupBoxes() {
     for _ in 0..<numBoxes {

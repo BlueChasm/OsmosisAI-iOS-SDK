@@ -16,6 +16,7 @@ Pod::Spec.new do |s|
   s.platform                  = :ios, "11.0"
   s.source                    = { :git => "https://github.com/BlueChasm/OsmosisAI-iOS-SDK.git", :tag => "#{s.version}" }
   s.source_files              = 'OsmosisAI/**/*.{swift,mlmodel}'
+  s.ios.vendored_frameworks   = 'TesseractOCR.framework'
   s.swift_version             = '4.2'
 
   s.resources                 = ['OsmosisAI/**/*.{txt,storyboard,sks,xib,xcassets}']
