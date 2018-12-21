@@ -63,8 +63,7 @@ open class OsmosisAIViewController: UIViewController, AVCaptureVideoDataOutputSa
   }
   
   open override func viewWillAppear(_ animated: Bool) {
-    super.viewWillAppear(animated)
-  
+    super.viewWillAppear(animated)  
     
     if let c = SessionData.shared.currentClassifier {
       setupDownloadedModel(classifier: c)

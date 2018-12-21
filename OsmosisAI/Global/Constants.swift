@@ -20,8 +20,8 @@ public class Constants {
   
   static let OsmosisDarkBlue    = UIColor.colorWithHex(hex: 0x062f53)
   static let OsmosisLightBlue   = UIColor.colorWithHex(hex: 0x1190f5)
-  public static let AppBlue            = UIColor(red: 65/255, green: 141/255, blue: 238/255, alpha: 1)
-  public static let AppOrange          = UIColor(red: 225/255, green: 159/255, blue: 85/255, alpha: 1)
+  public static let AppBlue     = UIColor(red: 65/255, green: 141/255, blue: 238/255, alpha: 1)
+  public static let AppOrange   = UIColor(red: 225/255, green: 159/255, blue: 85/255, alpha: 1)
   
   static let ProcessingComplete         = Notification.Name("ClassifierProcessingComplete")
   static let ClassifierDownloadComplete = Notification.Name("ClassifierDownloadComplete")
