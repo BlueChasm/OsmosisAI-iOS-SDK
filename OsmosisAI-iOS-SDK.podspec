@@ -19,11 +19,15 @@ Pod::Spec.new do |s|
   s.swift_version             = '4.2'
 
   s.resources                 = ['OsmosisAI/**/*.{txt,storyboard,sks,xib,xcassets}']
+  s.ios.frameworks            = 'CoreLocation'
+  
   s.dependency                'Alamofire'
   s.dependency                'AlamofireImage'
   s.dependency                'AlamofireObjectMapper'
   s.dependency                'ISMessages'
   s.dependency                'SDWebImage'
+  s.dependency                'Starscream'
   s.dependency                'SVProgressHUD'
+  s.dependency                'SwiftyJSON'
   
 end

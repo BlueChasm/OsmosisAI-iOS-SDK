@@ -89,6 +89,18 @@ public extension UIViewController {
 
 public extension UIView {
   
+  func toImage() -> UIImage? {
+    var screenshotImage: UIImage?
+    let layer = self.layer
+    let scale = UIScreen.main.scale
+    UIGraphicsBeginImageContextWithOptions(layer.frame.size, false, scale);
+    guard let context = UIGraphicsGetCurrentContext() else {return nil}
+    layer.render(in:context)
+    screenshotImage = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    return screenshotImage
+  }
+  
   func opacity(duration: Double, from: Int, to: Int, delegate: CAAnimationDelegate?=nil) {
     let animation = CABasicAnimation(keyPath: "opacity")
     animation.fromValue = from
@@ -289,12 +301,24 @@ public extension String {
     return String(self[substringStartIndex ..< substringEndIndex])
   }
   
-  func contains(find: String) -> Bool{
+  func contains(find: String) -> Bool {
     return self.range(of: find) != nil
   }
   
-  func containsIgnoringCase(find: String) -> Bool{
+  func containsIgnoringCase(find: String) -> Bool {
     return self.range(of: find, options: .caseInsensitive) != nil
+  }
+  
+  func JSONStringify(value: Any, prettyPrinted: Bool = false) -> String {
+    let options = prettyPrinted ? JSONSerialization.WritingOptions.prettyPrinted : nil
+    if JSONSerialization.isValidJSONObject(value) {
+      if let data = try? JSONSerialization.data(withJSONObject: value, options: options ?? []) {
+        if let string = String(data: data, encoding: String.Encoding.utf8) {
+          return string
+        }
+      }
+    }
+    return ""
   }
 }
 
@@ -386,6 +410,7 @@ public extension UIImage {
     
     return UIImage(cgImage: ctx.makeImage()!)
   }
+
 }
 
 
@@ -416,7 +441,7 @@ public extension UIAlertAction {
 
 extension UIImageView {
   
-  func addGradientLayer(frame: CGRect, colors:[UIColor]){
+  func addGradientLayer(frame: CGRect, colors:[UIColor]) {
     let gradient = CAGradientLayer()
     gradient.frame = frame
     gradient.colors = colors.map{$0.cgColor}

@@ -18,8 +18,10 @@ class Authentication {
   var clientID: String?
   var clientSecret: String?
   
+  var isAuthenticated: Bool = false
+  
   func authenticate(email: String, password: String, result: ((Bool?, Error?) -> Void)? = nil) {
-    Token.login(email: email, password: password) { (success, error) in
+    Token.login(email: email, password: password) { [weak self] (success, error) in
       if let err = error {
         result?(false, err)
         return
@@ -31,6 +33,7 @@ class Authentication {
         return
       }
       
+      self?.isAuthenticated = true
       result?(true, nil)
     }
   }

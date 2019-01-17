@@ -18,4 +18,8 @@ public class SessionData {
   static let shared = SessionData()
   
   public var currentClassifier: Classifier?
+  
+  public class func classifier() -> Classifier? {
+    return SessionData.shared.currentClassifier
+  }
 }

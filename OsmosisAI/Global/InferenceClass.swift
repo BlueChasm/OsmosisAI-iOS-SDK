@@ -20,6 +20,7 @@ public class InferenceClass {
   // MARK: - Properties
   
   var view: UIView!
+  var imageV: UIImageView!
   
   var ssdPostProcessor = SSDPostProcessor(numAnchors: 1917, numClasses: 90)  // Configuration of default SSD MobileNet Model
   var visionModel: VNCoreMLModel!
@@ -29,6 +30,7 @@ public class InferenceClass {
   var screenWidth: Double
   let numBoxes = 100
   var boundingBoxes: [BoundingBox] = []
+  var imageViewBoundingBoxes: [BoundingBox] = []
   let multiClass = true
   
   
@@ -36,6 +38,8 @@ public class InferenceClass {
   
   public init(view: UIView, classifier: Classifier? = nil) {
     self.view = view
+    
+    imageV = UIImageView(frame: view.frame)
     
     screenWidth = Double(view.frame.width)
     screenHeight = Double(view.frame.height)
@@ -47,14 +51,25 @@ public class InferenceClass {
       guard let v = setupInception() else { fatalError("Can't load Inception VisionML model") }
       visionModel = v
     }
-
+    
     setupBoxes()
+    setupImageViewBoxes()
   }
-
+  
   
   public func processSampleBuffer(sampleBuffer: CMSampleBuffer) {
     guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
       return
+    }
+    
+    var ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+    let transform = ciImage.orientationTransform(for: CGImagePropertyOrientation(rawValue: 6)!)
+    ciImage = ciImage.transformed(by: transform)
+    
+    let size = ciImage.extent.size
+    let image = convert(cmage: ciImage)
+    DispatchQueue.main.async {
+      self.imageV.image = image
     }
     
     var requestOptions:[VNImageOption : Any] = [:]
@@ -78,19 +93,67 @@ public class InferenceClass {
       try imageRequestHandler.perform([trackingRequest])
     } catch {
       print(error)
+      semaphore.signal()
+    }
+  }
+  
+  
+  public func processImageData(data: Data) {
+    let orientation = CGImagePropertyOrientation(rawValue: UInt32(EXIFOrientation.rightTop.rawValue))
+    
+    let trackingRequest = VNCoreMLRequest(model: visionModel) { (request, error) in
+      guard let predictions = self.processClassifications(for: request, error: error) else { return }
+      DispatchQueue.main.async {
+        self.drawBoxes(predictions: predictions)
+      }
       self.semaphore.signal()
-      
+    }
+    trackingRequest.imageCropAndScaleOption = VNImageCropAndScaleOption.centerCrop
+    
+    self.semaphore.wait()
+    do {
+      let imageRequestHandler = VNImageRequestHandler(data: data, orientation: orientation!, options: [:])
+      try imageRequestHandler.perform([trackingRequest])
+    } catch {
+      print(error)
+      semaphore.signal()
+    }
+  }
+  
+  
+  public func processImage(image: UIImage) {
+    guard let ciImage = CIImage(image: image) else { fatalError("Can't create CIImage from UIImage") }
+    
+    let orientation = CGImagePropertyOrientation(rawValue: UInt32(EXIFOrientation.rightTop.rawValue))
+    
+    let trackingRequest = VNCoreMLRequest(model: visionModel) { (request, error) in
+      guard let predictions = self.processClassifications(for: request, error: error) else { return }
+      DispatchQueue.main.async {
+        self.drawBoxes(predictions: predictions)
+      }
+      self.semaphore.signal()
+    }
+    trackingRequest.imageCropAndScaleOption = VNImageCropAndScaleOption.centerCrop
+    
+    self.semaphore.wait()
+    do {
+      let imageRequestHandler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation!)
+      try imageRequestHandler.perform([trackingRequest])
+    } catch {
+      print(error)
+      semaphore.signal()
     }
   }
   
   
   public func updateClassifier(classifier: Classifier) {
     guard let v = setupDownloadedModel(classifier: classifier) else { fatalError("Can't load VisionML model") }
+    
     visionModel = v
   }
   
   
-
+  
   // MARK: - Private Methods
   
   private func setupDownloadedModel(classifier: Classifier) -> VNCoreMLModel? {
@@ -125,6 +188,15 @@ public class InferenceClass {
   }
   
   
+  private func setupImageViewBoxes() {
+    for _ in 0..<numBoxes {
+      let box = BoundingBox()
+      box.addToLayer(imageV.layer)
+      self.imageViewBoundingBoxes.append(box)
+    }
+  }
+  
+  
   private func processClassifications(for request: VNRequest, error: Error?) -> [Prediction]? {
     guard let results = request.results as? [VNCoreMLFeatureValueObservation] else {
       return nil
@@ -145,6 +217,7 @@ public class InferenceClass {
   
   
   private func drawBoxes(predictions: [Prediction]) {
+    guard let classNames = self.ssdPostProcessor.classNames else { return }
     
     for (index, prediction) in predictions.enumerated() {
       if let classNames = self.ssdPostProcessor.classNames {
@@ -154,13 +227,40 @@ public class InferenceClass {
         
         textColor = UIColor.black
         let rect = prediction.finalPrediction.toCGRect(imgWidth: screenWidth, imgHeight: screenWidth, xOffset: 0, yOffset: (screenHeight - screenWidth)/2)
+        
         self.boundingBoxes[index].show(frame: rect,
                                        label: textLabel,
                                        color: UIColor.red, textColor: textColor)
+        
+        self.imageViewBoundingBoxes[index].show(frame: rect,
+                                                label: textLabel,
+                                                color: UIColor.red, textColor: textColor)
       }
     }
     for index in predictions.count..<self.numBoxes {
       self.boundingBoxes[index].hide()
+      self.imageViewBoundingBoxes[index].hide()
+    }
+    
+    let classes: [[String : Any]] = predictions.compactMap{ (p) -> [String : Any]? in
+      var res: [String : Any] = [:]
+      res["label"] = classNames[p.detectedClass]
+      res["score"] = Float(self.sigmoid(p.score))
+      return res
+    }
+
+    var modelName = "Generic"
+    if let c = SessionData.shared.currentClassifier {
+      modelName = c.title ?? "Unknown"
+    }
+    
+    sendScreenShot(text: nil, model: modelName, detections: classes)
+  }
+  
+  
+  private func sendScreenShot(text: [String]?, model: String? = nil, detections: [[String : Any]]?) {
+    if let image = imageV.toImage() {
+      SocketManager.shared.sendRTEventPacket(text: text, image: image, classifier: model, detections: detections)
     }
   }
   
@@ -219,5 +319,10 @@ public class InferenceClass {
       return .rightTop
     }
   }
-
+  
+  private func convert(cmage: CIImage) -> UIImage {
+    let context = CIContext.init(options: nil)
+    let cgImage = context.createCGImage(cmage, from: cmage.extent)!
+    return UIImage.init(cgImage: cgImage)
+  }
 }

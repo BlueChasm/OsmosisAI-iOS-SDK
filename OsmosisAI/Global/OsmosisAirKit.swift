@@ -17,9 +17,24 @@ open class OsmosisAirKit {
   public class func initialize(clientID: String, secret: String) {
     Authentication.shared.clientID = clientID
     Authentication.shared.clientSecret = secret
+    
+    SocketManager.shared.connect()    
   }
   
   public class func login(email: String, password: String, result: ((Bool?, Error?) -> Void)? = nil) {
     Authentication.shared.authenticate(email: email, password: password, result: result)
+  }
+  
+  public class func startLocationServices() {
+    /*if Authentication.shared.isAuthenticated == false {
+      print("Please authenticate OsmosisAIRKit.")
+      return
+    }*/
+    
+    LocationManager.shared.startUpdatingLocation()    
+  }
+  
+  public class func stopLocationServices() {
+    LocationManager.shared.stopUpdatingLocation()
   }
 }

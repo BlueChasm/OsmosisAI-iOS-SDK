@@ -108,6 +108,7 @@ class SSDPostProcessor: NSObject {
   
   init(numAnchors: Int = 1917, classifier: Classifier, threshold: Double = 0.01) {
     self.numAnchors = numAnchors
+    print("********** \(classifier.labels.count)")
     self.numClasses = classifier.labels.count
     self.threshold = threshold
     
