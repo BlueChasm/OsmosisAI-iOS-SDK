@@ -22,7 +22,7 @@ public class InferenceClass {
   var view: UIView!
   var imageV: UIImageView!
   
-  var ssdPostProcessor = SSDPostProcessor(numAnchors: 1917, numClasses: 90)  // Configuration of default SSD MobileNet Model
+  var ssdPostProcessor = SSDPostProcessor(numAnchors: 1917, numClasses: 1)  // Configuration of default SSD MobileNet Model
   var visionModel: VNCoreMLModel!
   let semaphore = DispatchSemaphore(value: 1)
   
@@ -173,7 +173,7 @@ public class InferenceClass {
   
   
   private func setupInception() -> VNCoreMLModel? {
-    guard let v = try? VNCoreMLModel(for: ssd_mobilenet_feature_extractor().model)
+    guard let v = try? VNCoreMLModel(for: coffeeThermal().model)
       else { fatalError("Can't load VisionML model") }
     return v
   }
@@ -221,6 +221,8 @@ public class InferenceClass {
     
     for (index, prediction) in predictions.enumerated() {
       if let classNames = self.ssdPostProcessor.classNames {
+        print(index)
+        print(prediction)
         let textColor: UIColor
         let name = classNames[prediction.detectedClass]
         let textLabel = String(format: "%.2f - %@", self.sigmoid(prediction.score), name)

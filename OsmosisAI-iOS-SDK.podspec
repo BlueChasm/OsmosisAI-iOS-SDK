@@ -13,16 +13,16 @@ Pod::Spec.new do |s|
 
   s.license                   = { :type => 'MIT', :file => 'LICENSE' }
   s.author                    = { "OsmosisAI" => "support@osmosisai.com" }
-  s.platform                  = :ios, "11.0"
+  s.platform                  = :ios, "12.0"
   s.source                    = { :git => "https://github.com/BlueChasm/OsmosisAI-iOS-SDK.git", :tag => "#{s.version}" }
   s.source_files              = 'OsmosisAI/**/*.{swift,mlmodel}'
-  s.swift_version             = '4.2'
+  s.swift_version             = '5.0'
 
   s.resources                 = ['OsmosisAI/**/*.{txt,storyboard,sks,xib,xcassets}']
   s.ios.frameworks            = 'CoreLocation'
   
-  s.dependency                'Alamofire'
-  s.dependency                'AlamofireImage'
+  s.dependency                'Alamofire' #,              '~> 5.0.0-beta.5'
+  s.dependency                'AlamofireImage' #,         '~> 4.0.0-beta.2'
   s.dependency                'AlamofireObjectMapper'
   s.dependency                'ISMessages'
   s.dependency                'SDWebImage'

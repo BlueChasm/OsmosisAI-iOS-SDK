@@ -94,11 +94,11 @@ class SSDPostProcessor: NSObject {
     super.init()
     
     let podBundle = Bundle(for: self.classForCoder) //Bundle(forClass: self.classForCoder)
-    if let path = podBundle.path(forResource: "coco_labels_list", ofType: "txt") {
+    if let path = podBundle.path(forResource: "coffeeThermal", ofType: "txt") {
       do {
         let data = try String(contentsOfFile: path, encoding: .utf8)
         classNames = data.components(separatedBy: .newlines)
-        
+        print(classNames ?? "Empty")
       } catch {
         print(error)
       }

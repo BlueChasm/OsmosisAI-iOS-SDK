@@ -39,7 +39,7 @@ enum RTSocketAction: String {
 }
 
 let RTwebserviceURL = "ws://kobayashi.local.chasmforge.com:32082"
-let AIwebserviceURL = "ws://kobayashi.local.chasmforge.com:32080"
+let AIwebserviceURL = "ws://kobayashi.local.chasmforge.com:32090"
 
 public class SocketManager {
   

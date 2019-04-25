@@ -166,12 +166,12 @@ open class ClassifierListViewController: UIViewController {
 
 extension ClassifierListViewController : UITableViewDataSource, UITableViewDelegate {
   
-  private func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+  public func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
     let classifier = classifiers[indexPath.row]
     return !classifier.isBuiltIn
   }
   
-  private func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+  public func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
     if editingStyle == .delete {
       let classifier = classifiers[indexPath.row]
       askToDeleteClassifier(classifier: classifier)

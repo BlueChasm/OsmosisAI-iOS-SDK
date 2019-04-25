@@ -21,7 +21,7 @@ open class OsmosisARViewController: UIViewController {
 
   var currentBuffer: CVPixelBuffer?
   
-  var ssdPostProcessor = SSDPostProcessor(numAnchors: 1917, numClasses: 90)
+  var ssdPostProcessor = SSDPostProcessor(numAnchors: 1917, numClasses: 1)
   
   var anchorLabels = [UUID: String]()
   private var allNodes = [SCNNode]()
@@ -60,7 +60,7 @@ open class OsmosisARViewController: UIViewController {
         ssdPostProcessor = SSDPostProcessor(classifier: c)
         model = try VNCoreMLModel(for: m)
       } else {
-        model = try VNCoreMLModel(for: ssd_mobilenet_feature_extractor().model)
+        model = try VNCoreMLModel(for: coffeeThermal().model)
       }
       
       classificationRequest = VNCoreMLRequest(model: model!, completionHandler: { [weak self] request, error in
